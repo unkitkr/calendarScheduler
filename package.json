@@ -1,0 +1,14 @@
+{
+  "name": "easyschedule",
+  "version": "0.0.1",
+  "description": "Backend for calendar scheduling",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ankit <unkitkr.xyz>",
+  "license": "MIT",
+  "dependencies": {
+    "typescript": "^4.9.4"
+  }
+}
