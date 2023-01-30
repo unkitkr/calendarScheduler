@@ -1,12 +1,25 @@
 import { Request, Response } from 'express'
-import { CalendarDB, UsersDB } from '../db/index'
-import { ICalendar, IIntervals, IUser } from '../types'
+import { CalendarDB, ServicesDB, UsersDB } from '../db/index'
+import {
+  ICalendar,
+  IIntervals,
+  ISchedulePayload,
+  IServices,
+  IUser,
+} from '../types'
 import moment from 'moment'
+
+const isDateOverlapping = (date1: IIntervals, date2: IIntervals) => {
+  const conditional =
+    moment(date1.start).format(`HH:MM`) <= moment(date2.end).format(`HH:MM`) &&
+    moment(date1.end).format(`HH:MM`) >= moment(date2.start).format(`HH:MM`)
+  return conditional
+}
 
 const keyByDates = (dates: IIntervals[]) => {
   const dateMap = new Map<string, IIntervals[]>([])
   dates.forEach((d) => {
-    const date = moment(d.start).format('DD/MM/YYYY')
+    const date = moment(d.start).format('YYYY-MM-DD')
     if (dateMap.get(date)) {
       dateMap.set(date, [...dateMap.get(date)!, d])
     } else {
@@ -20,14 +33,13 @@ const calculateIntervals = (
   start: Date,
   end: Date,
   bookedIntervals: IIntervals[],
+  date = '2023-01-31',
   duration: number = 15
 ) => {
   const startParsed = moment(start)
   const endParsed = moment(end)
 
   const bookedIntervalByDates = keyByDates(bookedIntervals)
-
-  // round date to nearest duration mins
   startParsed.minutes(Math.ceil(startParsed.minutes() / duration) * duration)
 
   var result = []
@@ -35,17 +47,40 @@ const calculateIntervals = (
   var current = moment(startParsed)
 
   while (current <= endParsed) {
-    result.push({
-      start: current.format('YYYY-MM-DD HH:mm'),
-      end: current.add(15, 'minutes').format('YYYY-MM-DD HH:mm'),
-    })
-  }
+    const startDT: Date = current.format('YYYY-MM-DD HH:mm') as any as Date
+    const endDT: Date = current
+      .add(15, 'minutes')
+      .format('YYYY-MM-DD HH:mm') as any as Date
+    const bookedSlots = bookedIntervalByDates.get(date)
+    const doNotAccount: IIntervals[] = []
 
+    bookedSlots?.forEach((slot) => {
+      const condt = isDateOverlapping(slot, { start: startDT, end: endDT })
+      if (condt) {
+        doNotAccount.push({ start: startDT, end: endDT })
+      }
+    })
+
+    if (doNotAccount.length) {
+      continue
+    } else {
+      result.push({
+        start: startDT,
+        end: endDT,
+      })
+    }
+  }
   return result
 }
 
-export const getAvailabilityOfUser = (req: Request, res: Response) => {
+export const getAvailabilityOfUserByDate = (req: Request, res: Response) => {
   const userId = req.params['userid']
+  const payload: ISchedulePayload = req.body
+  const isPayloadCorrct = Object.keys(payload).length
+  if (!isPayloadCorrct) {
+    res.send({ error: 'body missing in payload' }), 400
+    return
+  }
   const userWithIdExist = UsersDB.idAlreadyExist(userId)
   if (!userWithIdExist) {
     res.send({ error: 'user does not exist' }), 404
@@ -53,14 +88,25 @@ export const getAvailabilityOfUser = (req: Request, res: Response) => {
   }
   const allBookings = CalendarDB.fetchElementByID<ICalendar>(userId, 'userId')
   const bookedIntervals = allBookings.map((b) => ({
-    start: b.start,
-    end: b.end,
+    start: moment(b.start).format('YYYY-MM-DD HH:MM') as any as Date,
+    end: moment(b.end).format('YYYY-MM-DD HH:MM') as any as Date,
   }))
-  const userData = UsersDB.fetchElementByID<IUser>(userId, 'id')[0]
+  const userData = UsersDB.fetchElementByID<IUser>(userId, 'id')?.[0]
+  const serviceRequested = ServicesDB.fetchElementByID<IServices>(
+    payload.serviceId,
+    'id'
+  )?.[0]
+
+  // we can extend this to support multiple dates
+
   const intervals = calculateIntervals(
     userData!.availability_start,
     userData!.availability_end,
-    bookedIntervals
+    bookedIntervals,
+    payload.date,
+    serviceRequested.duration
   )
-  res.send(intervals)
+  const result: { [key: string]: IIntervals[] } = {}
+  result[payload.date] = intervals
+  res.send(result)
 }

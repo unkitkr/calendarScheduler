@@ -18,7 +18,7 @@ app.get('/service/:id', servceController.getServiceById)
 app.post('/service', servceController.createService)
 app.get('/service/:id/book', servceController.bookService)
 
-app.get('/calendar/:userid', calendarController.getAvailabilityOfUser)
+app.get('/calendar/:userid', calendarController.getAvailabilityOfUserByDate)
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`)
 })

@@ -11,6 +11,16 @@ export interface ICalendarPayload {
   end: Date
   duration: number
 }
+export interface ISchedulePayload {
+  date: string
+  serviceId: string
+}
+
+export interface I {
+  start: Date
+  end: Date
+  duration: number
+}
 
 export interface IServices {
   name: string
