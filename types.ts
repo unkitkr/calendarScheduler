@@ -26,3 +26,8 @@ export interface IUser {
   availability_end: Date
   id: string
 }
+
+export interface IIntervals {
+  start: Date
+  end: Date
+}
