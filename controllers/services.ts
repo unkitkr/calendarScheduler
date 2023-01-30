@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
-import { ServicesDB } from '../db/index'
-import { IServices } from '../types'
+import { CalendarDB, ServicesDB } from '../db/index'
+import { ICalendarPayload, IServices } from '../types'
 
 export const getServiceById = (req: Request, res: Response) => {
   const id = req.params['id']
@@ -24,7 +24,35 @@ export const createService = (req: Request, res: Response) => {
     return
   }
   try {
-    ServicesDB.writeData<IServices>(servicePayload)
+    ServicesDB.writeData(servicePayload)
+  } catch (e) {
+    res.send({ error: 'an internal error occured' }), 500
+  }
+  res.send({ success: 'Service created' }), 200
+}
+
+export const bookService = (req: Request, res: Response) => {
+  const id = req.params['id']
+  const payloadData: ICalendarPayload = req.body
+  if (!payloadData) {
+    res.send({ error: 'wrong body' }), 400
+  }
+  let service
+  try {
+    service = ServicesDB.fetchElementByID<IServices>(id, 'id')[0]
+  } catch (e) {
+    res.send({ error: 'an internal error occured' }), 500
+  }
+  const calendarPayload = {
+    serviceId: service?.id,
+    start: payloadData.start,
+    end: payloadData.end,
+    duration: service?.duration,
+    userId: service?.userId,
+  }
+
+  try {
+    CalendarDB.writeData(calendarPayload)
   } catch (e) {
     res.send({ error: 'an internal error occured' }), 500
   }
