@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { UsersDB } from '../db/index'
+import { ServicesDB, UsersDB } from '../db/index'
 import { IUser } from '../types'
 export const getUserById = (req: Request, res: Response) => {
   const id = req.params['id']
@@ -43,4 +43,19 @@ export const createUser = (req: Request, res: Response) => {
     res.send({ error: 'an internal error occured' }), 500
   }
   res.send({ success: 'user created' }), 200
+}
+
+export const getServicesByUserId = (req: Request, res: Response) => {
+  const id = req.params['id']
+  let services
+  try {
+    services = ServicesDB.fetchElementByID(id, 'userId')
+  } catch (e) {
+    res.send({ error: 'an internal error occured' }), 500
+  }
+  if (services) {
+    res.send(services), 200
+  } else {
+    res.send({ error: "404 services doesn't exist" }), 404
+  }
 }

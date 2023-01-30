@@ -2,11 +2,11 @@ import { Request, Response } from 'express'
 import { ServicesDB } from '../db/index'
 import { IServices } from '../types'
 
-export const getServiceByUserId = (req: Request, res: Response) => {
-  const id = req.params['userid']
+export const getServiceById = (req: Request, res: Response) => {
+  const id = req.params['id']
   let service
   try {
-    service = ServicesDB.fetchElementByID<IServices>(id, 'userId')
+    service = ServicesDB.fetchElementByID<IServices>(id, 'id')
   } catch (e) {
     res.send({ error: 'an internal error occured' }), 500
   }
