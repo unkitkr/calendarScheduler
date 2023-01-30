@@ -1,7 +1,7 @@
 export const PORT = 3002
 
 export enum dbPaths {
-  USER_DB = 'users.json',
-  USER_SERVICES = 'services.json',
-  USER_CALENDAR = 'calendar.json',
+  USER_DB = 'db/users.json',
+  USER_SERVICES = 'db/services.json',
+  USER_CALENDAR = 'db/calendar.json',
 }

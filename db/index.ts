@@ -29,7 +29,14 @@ class DB {
    */
   public writeData = <T>(data: T) => {
     const existingData: T[] = JSON.parse(readFileSync(this.dbName, 'utf-8'))
-    writeFileSync(this.dbName, JSON.stringify(existingData.push(data)))
+    existingData.push(data)
+    writeFileSync(this.dbName, JSON.stringify(existingData))
+  }
+
+  public idAlreadyExist = (id: string) => {
+    const existingData: any[] = this.fetchAllData()
+    const isExisting = existingData?.filter((f: any) => f.id === id)
+    return isExisting && isExisting.length ? true : false
   }
 
   /**
@@ -37,17 +44,17 @@ class DB {
    * @param db name of database
    * @returns all entities in the database
    */
-  public readAllData = <T>() => {
+  public fetchAllData = <T>() => {
     const existingData = JSON.parse(readFileSync(this.dbName, 'utf-8'))
     return existingData as T[]
   }
 
-  public getElementByID = <T>(id: string | number) => {
+  public fetchElementByID = <T>(id: string | number, entity: string) => {
     const existingData: T[] = JSON.parse(readFileSync(this.dbName, 'utf-8'))
-    return existingData.filter((f: any) => f.id === id)
+    return existingData.filter((f: any) => eval(`f.${entity}`) === id)
   }
 }
 
-export const Users = new DB(dbPaths.USER_DB)
-export const Calendar = new DB(dbPaths.USER_CALENDAR)
-export const Services = new DB(dbPaths.USER_SERVICES)
+export const UsersDB = new DB(dbPaths.USER_DB)
+export const CalendarDB = new DB(dbPaths.USER_CALENDAR)
+export const ServicesDB = new DB(dbPaths.USER_SERVICES)
